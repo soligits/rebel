@@ -34,9 +34,9 @@ REBEL is a silver dataset created for the paper REBEL: Relation Extraction By En
 
 _URL = ""
 _URLS = {
-    "train": _URL + "en_train.jsonl",
-    "dev": _URL + "en_val.jsonl",
-    "test": _URL + "en_test.jsonl",
+    "train": _URL + "train.jsonl",
+    "dev": _URL + "val.jsonl",
+    "test": _URL + "test.jsonl",
 }
 
 

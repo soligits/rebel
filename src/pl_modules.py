@@ -372,7 +372,7 @@ class BasePLModule(pl.LightningModule):
             outputs['predictions'], outputs['labels'] = self.generate_triples(batch, labels)
             return outputs
 
-    def validation_epoch_end(self, output: dict) -> Any:
+    def on_validation_epoch_end(self, output: dict) -> Any:
         if self.hparams.relations_file:
             relations_df = pd.read_csv(self.hparams.relations_file, header = None, sep='\t')
             relations = list(relations_df[0])

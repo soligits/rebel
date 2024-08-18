@@ -1,3 +1,4 @@
+import time
 from typing import Any, Union, List, Optional
 
 from omegaconf import DictConfig
@@ -62,10 +63,11 @@ class BasePLDataModule(pl.LightningDataModule):
         self.conf = conf
         self.tokenizer = tokenizer
         self.model = model
-        if conf.relations_file:
-            self.datasets = load_dataset(conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file, 'relations': conf.relations_file})
-        else:
-            self.datasets = load_dataset(conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file})
+        dataset_path = conf.dataset_path
+        # if conf.relations_file:
+        #     self.datasets = load_dataset(dataset_path, name=conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file, 'relations': conf.relations_file})
+        # else:
+        self.datasets = load_dataset(dataset_path, name=conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file})
         set_caching_enabled(True)
         self.prefix = conf.source_prefix if conf.source_prefix is not None else ""
         self.column_names = self.datasets["train"].column_names
@@ -84,6 +86,8 @@ class BasePLDataModule(pl.LightningDataModule):
 
     def prepare_data(self, *args, **kwargs):
         self.train_dataset = self.datasets["train"]
+        print(self.datasets["train"][0])
+        time.sleep(10)
         if "train" not in self.datasets:
             raise ValueError("--do_train requires a train dataset")
         if self.conf.max_train_samples is not None:
@@ -167,7 +171,6 @@ class BasePLDataModule(pl.LightningDataModule):
     #     raise NotImplementedError
 
     def preprocess_function(self, examples):
-
         inputs = examples[self.text_column]
         targets = examples[self.summary_column]
         inputs = [self.prefix + inp for inp in inputs]
