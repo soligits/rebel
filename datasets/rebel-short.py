@@ -17,6 +17,7 @@
 """REBEL"""
 
 from __future__ import absolute_import, division, print_function
+import time
 
 import pandas as pd
 
@@ -98,16 +99,24 @@ class Rebel(datasets.GeneratorBasedBuilder):
 
     def _generate_examples(self, filepath):
         """This function returns the examples in the raw (text) form."""
+        if isinstance(filepath, list):
+            filepath = filepath[0]
         logging.info("generating examples from = %s", filepath)
-        relations_df = pd.read_csv(self.config.data_files['relations'], header = None, sep='\t')
+        relations_df = pd.read_csv('/home/ubuntu/rebel/data/prebel/relations_count.tsv', header = None, sep='\t')
         relations = list(relations_df[0])
 
         with open(filepath, encoding="utf-8") as f:
+            uri_set = set()
             for id_, row in enumerate(f):
                 article = json.loads(row)
                 prev_len = 0
                 if len(article['triples']) == 0:
                     continue
+                if article['uri'] in uri_set:
+                    # print(f"duplicate {article['title']}")
+                    # time.sleep
+                    continue
+                uri_set.add(article['uri'])
                 count = 0
                 for text_paragraph in article['text'].split('\n'):
                     if len(text_paragraph) == 0:

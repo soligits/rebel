@@ -5,7 +5,7 @@ from omegaconf import DictConfig
 
 import torch
 from torch.utils.data import DataLoader
-import pytorch_lightning as pl
+from pytorch_lightning import LightningDataModule 
 from datasets import load_dataset, set_caching_enabled
 from transformers import (
     AutoConfig,
@@ -16,7 +16,7 @@ from transformers import (
     set_seed,
 )
 
-class BasePLDataModule(pl.LightningDataModule):
+class BasePLDataModule(LightningDataModule):
     """
     FROM LIGHTNING DOCUMENTATION
 
@@ -67,7 +67,7 @@ class BasePLDataModule(pl.LightningDataModule):
         # if conf.relations_file:
         #     self.datasets = load_dataset(dataset_path, name=conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file, 'relations': conf.relations_file})
         # else:
-        self.datasets = load_dataset(dataset_path, name=conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file})
+        self.datasets = load_dataset(conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file})
         set_caching_enabled(True)
         self.prefix = conf.source_prefix if conf.source_prefix is not None else ""
         self.column_names = self.datasets["train"].column_names
@@ -86,8 +86,6 @@ class BasePLDataModule(pl.LightningDataModule):
 
     def prepare_data(self, *args, **kwargs):
         self.train_dataset = self.datasets["train"]
-        print(self.datasets["train"][0])
-        time.sleep(10)
         if "train" not in self.datasets:
             raise ValueError("--do_train requires a train dataset")
         if self.conf.max_train_samples is not None:

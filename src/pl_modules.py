@@ -263,7 +263,7 @@ class BasePLModule(pl.LightningModule):
         decoded_preds = self.tokenizer.batch_decode(next_tokens, skip_special_tokens=False)
 
         return [rel.strip() for rel in decoded_preds]
-
+    
     def validation_step(self, batch: dict, batch_idx: int) -> None:
         gen_kwargs = {
             "max_length": self.hparams.val_max_target_length
@@ -315,6 +315,7 @@ class BasePLModule(pl.LightningModule):
 
         outputs = {}
         outputs['predictions'], outputs['labels'] = self.generate_triples(batch, labels)
+        self.validation_epoch_output = getattr(self, "validation_epoch_output", []) + [outputs] 
         return outputs
 
     def test_step(self, batch: dict, batch_idx: int) -> None:
@@ -366,13 +367,17 @@ class BasePLModule(pl.LightningModule):
             self.log(key, metrics[key], prog_bar=True)
 
         if self.hparams.finetune:
-            return {'predictions': self.forward_samples(batch, labels)}
+            outputs = {'predictions': self.forward_samples(batch, labels)}
+            self.test_epoch_output = getattr(self, "test_epoch_output", []) + [outputs]
         else:
             outputs = {}
             outputs['predictions'], outputs['labels'] = self.generate_triples(batch, labels)
-            return outputs
+            self.test_epoch_output = getattr(self, "test_epoch_output", []) + [outputs]
 
-    def on_validation_epoch_end(self, output: dict) -> Any:
+    def on_validation_epoch_end(self) -> Any:
+        output = getattr(self, "validation_epoch_output", [])
+        self.validation_epoch_output = []
+        
         if self.hparams.relations_file:
             relations_df = pd.read_csv(self.hparams.relations_file, header = None, sep='\t')
             relations = list(relations_df[0])
@@ -406,18 +411,30 @@ class BasePLModule(pl.LightningModule):
                     preds_list.append(pred[0]["type"])
                     labels_list.append(lab[0]["type"])
             prec_micro, recall_micro, f1_micro = score(labels_list, preds_list, verbose=True)
-            self.log('val_prec_micro', prec_micro)
-            self.log('val_recall_micro', recall_micro)
-            self.log('val_F1_micro', f1_micro)
+            # self.log('val_prec_micro', prec_micro)
+            # self.log('val_recall_micro', recall_micro)
+            # self.log('val_F1_micro', f1_micro)
+            self.log_dict({
+                'val_prec_micro': precision,
+                'val_recall_micro': recall,
+                'val_F1_micro': f1
+            })
 
-    def test_epoch_end(self, output: dict) -> Any:
+    def on_test_epoch_end(self) -> Any:
+        output = getattr(self, "test_epoch_output", [])
+        self.test_epoch_output = []
         if not self.hparams.finetune and self.hparams.relations_file:
             relations_df = pd.read_csv(self.hparams.relations_file, header = None, sep='\t')
             relations = list(relations_df[0])
             scores, precision, recall, f1 = re_score([item for pred in output for item in pred['predictions']], [item for pred in output for item in pred['labels']], relations)
-            self.log('test_prec_micro', precision)
-            self.log('test_recall_micro', recall)
-            self.log('test_F1_micro', f1)
+            # self.log('test_prec_micro', precision)
+            # self.log('test_recall_micro', recall)
+            # self.log('test_F1_micro', f1)
+            self.log_dict({
+                'test_prec_micro': precision,
+                'test_recall_micro': recall,
+                'test_F1_micro': f1
+            })
         elif not 'tacred' in self.hparams.dataset_name.split('/')[-1]:
             if self.hparams.dataset_name.split('/')[-1] == 'conll04_typed.py':
                 scores, precision, recall, f1 = re_score([item for pred in output for item in pred['predictions']], [item for pred in output for item in pred['labels']], ['killed by', 'residence', 'location', 'headquarters location', 'employer'], "strict")
