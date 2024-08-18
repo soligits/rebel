@@ -3,3 +3,4 @@
 outputs/
 data/prebel/
 *.tar.bz2
+screenlog.*

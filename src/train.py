@@ -1,5 +1,6 @@
 import omegaconf
 import hydra
+import torch
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
@@ -16,6 +17,10 @@ from generate_samples import GenerateTextSamplesCallback
 
 def train(conf: omegaconf.DictConfig) -> None:
     pl.seed_everything(conf.seed)
+    try:
+        torch.set_float32_matmul_precision('medium')
+    except Exception as e:
+        print('unable to activate TensorCore')
     
     config = AutoConfig.from_pretrained(
         conf.config_name if conf.config_name else conf.model_name_or_path,
