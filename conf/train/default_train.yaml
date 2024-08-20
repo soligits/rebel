@@ -3,9 +3,9 @@
 # optimization
 train_batch_size: 8
 eval_batch_size: 16
-gradient_acc_steps: 16
+gradient_acc_steps: 8
 gradient_clip_value: 10.0
-max_steps: 900000
+max_steps: 200000
 
 # evaluation and persistence
 apply_early_stopping: True
@@ -16,7 +16,7 @@ monitor_var_mode: 'min'
 patience: 50
 model_name: 'default_name'
 save_top_k: 3
-log_every_n_steps: 10000
+log_every_n_steps: 1000
 
 # core
 gpus: 1

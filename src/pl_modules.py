@@ -1,3 +1,4 @@
+import time
 from typing import Any
 import nltk
 import json
@@ -238,8 +239,6 @@ class BasePLModule(pl.LightningModule):
         return [rel.strip() for rel in decoded_preds]
 
     def forward_samples(self,
-        # model,
-        # tokenizer,
         batch,
         labels,
     ) -> None:

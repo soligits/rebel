@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 import torch
 from torch.utils.data import DataLoader
 from pytorch_lightning import LightningDataModule 
-from datasets import load_dataset, set_caching_enabled
+from datasets import load_dataset, set_caching_enabled, disable_caching
 from transformers import (
     AutoConfig,
     AutoModelForSeq2SeqLM,
@@ -68,7 +68,7 @@ class BasePLDataModule(LightningDataModule):
         #     self.datasets = load_dataset(dataset_path, name=conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file, 'relations': conf.relations_file})
         # else:
         self.datasets = load_dataset(conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file}, trust_remote_code=True)
-        set_caching_enabled(True)
+        disable_caching()
         self.prefix = conf.source_prefix if conf.source_prefix is not None else ""
         self.column_names = self.datasets["train"].column_names
         # self.source_lang, self.target_lang, self.text_column, self.summary_column = None, None, None, None
@@ -96,7 +96,7 @@ class BasePLDataModule(LightningDataModule):
             num_proc=self.conf.preprocessing_num_workers,
             remove_columns=self.column_names,
             load_from_cache_file=not self.conf.overwrite_cache,
-            cache_file_name=self.conf.train_file.replace('.jsonl', '-') + self.conf.dataset_name.split('/')[-1].replace('.py', '.cache'),
+            # cache_file_name=self.conf.train_file.replace('.jsonl', '-') + self.conf.dataset_name.split('/')[-1].replace('.py', '.cache'),
         )
 
         if self.conf.do_eval:
@@ -112,7 +112,7 @@ class BasePLDataModule(LightningDataModule):
                 num_proc=self.conf.preprocessing_num_workers,
                 remove_columns=self.column_names,
                 load_from_cache_file=not self.conf.overwrite_cache,
-                cache_file_name=self.conf.validation_file.replace('.jsonl', '-') + self.conf.dataset_name.split('/')[-1].replace('.py', '.cache'),
+                # cache_file_name=self.conf.validation_file.replace('.jsonl', '-') + self.conf.dataset_name.split('/')[-1].replace('.py', '.cache'),
             )
 
         if self.conf.do_predict:
@@ -128,7 +128,7 @@ class BasePLDataModule(LightningDataModule):
                 num_proc=self.conf.preprocessing_num_workers,
                 remove_columns=self.column_names,
                 load_from_cache_file=not self.conf.overwrite_cache,
-                cache_file_name=self.conf.test_file.replace('.jsonl', '-') + self.conf.dataset_name.split('/')[-1].replace('.py', '.cache'),
+                # cache_file_name=self.conf.test_file.replace('.jsonl', '-') + self.conf.dataset_name.split('/')[-1].replace('.py', '.cache'),
             )
 
     def train_dataloader(self, *args, **kwargs) -> DataLoader:
@@ -172,7 +172,7 @@ class BasePLDataModule(LightningDataModule):
         inputs = examples[self.text_column]
         targets = examples[self.summary_column]
         inputs = [self.prefix + inp for inp in inputs]
-        model_inputs = self.tokenizer(inputs, max_length=self.conf.max_source_length, padding=self.padding, truncation=True)
+        model_inputs = self.tokenizer(inputs, max_length=self.max_target_length, padding=self.padding, truncation=True)
 
         # Setup the tokenizer for targets
         with self.tokenizer.as_target_tokenizer():
@@ -188,4 +188,10 @@ class BasePLDataModule(LightningDataModule):
         # model_inputs["decoder_attention_mask"] = labels["attention_mask"]
         # model_inputs["labels"] = shift_tokens_left(labels["input_ids"], self.tokenizer.pad_token_id)
         model_inputs["labels"] = labels["input_ids"]
+        # print("############################")
+        # print("input:" + inputs[0])
+        # print("target:" + targets[0])
+        # print(f"input_ids: {model_inputs['input_ids'][0]}")
+        # print(f"target_ids: {model_inputs['labels'][0]}")
+        # time.sleep(10)
         return model_inputs

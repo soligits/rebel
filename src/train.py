@@ -1,3 +1,4 @@
+from time import sleep
 import omegaconf
 import hydra
 import torch
@@ -16,11 +17,6 @@ from pytorch_lightning.callbacks import LearningRateMonitor
 from generate_samples import GenerateTextSamplesCallback
 
 def train(conf: omegaconf.DictConfig) -> None:
-    pl.seed_everything(conf.seed)
-    try:
-        torch.set_float32_matmul_precision('medium')
-    except Exception as e:
-        print('unable to activate TensorCore')
     
     config = AutoConfig.from_pretrained(
         conf.config_name if conf.config_name else conf.model_name_or_path,
@@ -30,24 +26,26 @@ def train(conf: omegaconf.DictConfig) -> None:
         dropout=conf.dropout,
         forced_bos_token_id=None,
     )
-    
+
+    special_tokens = [
+        "<triplet>",
+        "<obj>",
+        "<subj>",
+    ]
+        
     tokenizer_kwargs = {
-        "use_fast": conf.use_fast_tokenizer,
-        "additional_special_tokens": ['<obj>', '<subj>', '<triplet>', '<head>', '</head>', '<tail>', '</tail>'], # Here the tokens for head and tail are legacy and only needed if finetuning over the public REBEL checkpoint, but are not used. If training from scratch, remove this line and uncomment the next one.
-#         "additional_special_tokens": ['<obj>', '<subj>', '<triplet>'],
+        "use_fast": True,  # Always use fast tokenizer for better compatibility
+        "additional_special_tokens": special_tokens, 
+        "legacy": False,  # For mt5
     }
 
     tokenizer = AutoTokenizer.from_pretrained(
         conf.tokenizer_name if conf.tokenizer_name else conf.model_name_or_path,
         **tokenizer_kwargs
     )
-
-    if conf.dataset_name.split('/')[-1] == 'conll04_typed.py':
-        tokenizer.add_tokens(['<peop>', '<org>', '<other>', '<loc>'], special_tokens = True)
-    if conf.dataset_name.split('/')[-1] == 'nyt_typed.py':
-        tokenizer.add_tokens(['<loc>', '<org>', '<per>'], special_tokens = True)
-    if conf.dataset_name.split('/')[-1] == 'docred_typed.py':
-        tokenizer.add_tokens(['<loc>', '<misc>', '<per>', '<num>', '<time>', '<org>'], special_tokens = True)
+    
+    
+    print(f"Size of the tokenizer: {len(tokenizer)}")
 
     model = AutoModelForSeq2SeqLM.from_pretrained(
         conf.model_name_or_path,
@@ -55,7 +53,6 @@ def train(conf: omegaconf.DictConfig) -> None:
     )
     # if not conf.finetune:
     model.resize_token_embeddings(len(tokenizer))
-
     # data module declaration
     pl_data_module = BasePLDataModule(conf, tokenizer, model)
 
@@ -96,9 +93,7 @@ def train(conf: omegaconf.DictConfig) -> None:
         val_check_interval=conf.val_check_interval,
         callbacks=callbacks_store,
         max_steps=conf.max_steps,
-        # max_steps=total_steps,
         precision=conf.precision,
-        # amp_level=conf.amp_level,
         logger=wandb_logger,
         # resume_from_checkpoint=conf.checkpoint_path,
         # limit_val_batches=conf.val_percent_check,
