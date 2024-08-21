@@ -93,4 +93,4 @@ classifier: False
 samples_interval: 1000
 
 # Logger
-offline_mode: False
+offline_mode: True

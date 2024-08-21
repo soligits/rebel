@@ -188,15 +188,11 @@ class BasePLModule(pl.LightningModule):
             use_cache = True,
             **gen_kwargs,
         )
+        
 
         decoded_preds = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=False)
         decoded_labels = self.tokenizer.batch_decode(torch.where(labels != -100, labels, self.config.pad_token_id), skip_special_tokens=False)
-        if self.hparams.dataset_name.split('/')[-1] == 'conll04_typed.py':
-            return [extract_triplets_typed(rel) for rel in decoded_preds], [extract_triplets_typed(rel) for rel in decoded_labels]
-        elif self.hparams.dataset_name.split('/')[-1] == 'nyt_typed.py':
-            return [extract_triplets_typed(rel, {'<loc>': 'LOCATION', '<org>': 'ORGANIZATION', '<per>': 'PERSON'}) for rel in decoded_preds], [extract_triplets_typed(rel, {'<loc>': 'LOCATION', '<org>': 'ORGANIZATION', '<per>': 'PERSON'}) for rel in decoded_labels]
-        elif self.hparams.dataset_name.split('/')[-1] == 'docred_typed.py':
-            return [extract_triplets_typed(rel, {'<loc>': 'LOC', '<misc>': 'MISC', '<per>': 'PER', '<num>': 'NUM', '<time>': 'TIME', '<org>': 'ORG'}) for rel in decoded_preds], [extract_triplets_typed(rel, {'<loc>': 'LOC', '<misc>': 'MISC', '<per>': 'PER', '<num>': 'NUM', '<time>': 'TIME', '<org>': 'ORG'}) for rel in decoded_labels]
+        print(decoded_labels)
         return [extract_triplets(rel) for rel in decoded_preds], [extract_triplets(rel) for rel in decoded_labels]
 
     def generate_samples(self,
@@ -290,9 +286,13 @@ class BasePLModule(pl.LightningModule):
         with torch.no_grad():
             # compute loss on predict data
             forward_output = self.forward(batch, labels)
-
+        
+        
         forward_output['loss'] = forward_output['loss'].mean().detach()
 
+        # print(forward_output)
+        # time.sleep(10)
+        
         if self.hparams.prediction_loss_only:
             self.log('val_loss', forward_output['loss'])
             return
@@ -304,6 +304,7 @@ class BasePLModule(pl.LightningModule):
         else:
             forward_output['labels'] = labels
 
+        
         if self.hparams.predict_with_generate:
             metrics = self.compute_metrics(forward_output['logits'].detach().cpu(), forward_output['labels'].detach().cpu())
         else:
@@ -380,6 +381,8 @@ class BasePLModule(pl.LightningModule):
         if self.hparams.relations_file:
             relations_df = pd.read_csv(self.hparams.relations_file, header = None, sep='\t')
             relations = list(relations_df[0])
+            print(output)
+            time.sleep(10)
             scores, precision, recall, f1 = re_score([item for pred in output for item in pred['predictions']], [item for pred in output for item in pred['labels']], relations)
             self.log('val_prec_micro', precision)
             self.log('val_recall_micro', recall)
@@ -426,14 +429,9 @@ class BasePLModule(pl.LightningModule):
             relations_df = pd.read_csv(self.hparams.relations_file, header = None, sep='\t')
             relations = list(relations_df[0])
             scores, precision, recall, f1 = re_score([item for pred in output for item in pred['predictions']], [item for pred in output for item in pred['labels']], relations)
-            # self.log('test_prec_micro', precision)
-            # self.log('test_recall_micro', recall)
-            # self.log('test_F1_micro', f1)
-            self.log_dict({
-                'test_prec_micro': precision,
-                'test_recall_micro': recall,
-                'test_F1_micro': f1
-            })
+            self.log('test_prec_micro', precision)
+            self.log('test_recall_micro', recall)
+            self.log('test_F1_micro', f1)
         elif not 'tacred' in self.hparams.dataset_name.split('/')[-1]:
             if self.hparams.dataset_name.split('/')[-1] == 'conll04_typed.py':
                 scores, precision, recall, f1 = re_score([item for pred in output for item in pred['predictions']], [item for pred in output for item in pred['labels']], ['killed by', 'residence', 'location', 'headquarters location', 'employer'], "strict")

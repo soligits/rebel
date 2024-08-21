@@ -59,7 +59,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     # main module declaration
     pl_module = BasePLModule(conf, config, tokenizer, model)
 
-    wandb_logger = WandbLogger(project = conf.dataset_name.split('/')[-1].replace('.py', ''), name = conf.model_name_or_path.split('/')[-1])
+    wandb_logger = WandbLogger(project = conf.dataset_name.split('/')[-1].replace('.py', ''), name = conf.model_name_or_path.split('/')[-1], offline=conf.offline_mode)
 
     callbacks_store = []
 
@@ -95,13 +95,15 @@ def train(conf: omegaconf.DictConfig) -> None:
         max_steps=conf.max_steps,
         precision=conf.precision,
         logger=wandb_logger,
-        # resume_from_checkpoint=conf.checkpoint_path,
-        # limit_val_batches=conf.val_percent_check,
         log_every_n_steps=conf.log_every_n_steps
     )
 
     # module fit
-    trainer.fit(pl_module, datamodule=pl_data_module)
+    trainer.fit(
+        pl_module, 
+        datamodule=pl_data_module,
+        # ckpt_path=conf.checkpoint_path,
+    )
 
 @hydra.main(config_path='../conf', config_name='root')
 def main(conf: omegaconf.DictConfig):

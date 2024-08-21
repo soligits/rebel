@@ -1,5 +1,6 @@
 
 import math
+from time import sleep
 from typing import Callable, Dict, Iterable, List, Tuple, Union
 
 import numpy as np
@@ -200,9 +201,19 @@ def shift_tokens_left(input_ids: torch.Tensor, pad_token_id: int):
 def extract_triplets(text):
     triplets = []
     relation, subject, relation, object_ = '', '', '', ''
-    text = text.strip()
+    text = (
+        text
+        .replace("<obj>", " <obj> ")
+        .replace("<subj>", " <subj> ")
+        .replace("<triplet>", " <triplet> ")
+        .replace("<s>", "")
+        .replace("</s>", "")
+        .replace("<pad>", "")
+        .strip()
+    )
     current = 'x'
-    for token in text.replace("<s>", "").replace("<pad>", "").replace("</s>", "").split():
+    for token in text.split():
+        print(token)
         if token == "<triplet>":
             current = 't'
             if relation != '':
@@ -226,6 +237,11 @@ def extract_triplets(text):
                 relation += ' ' + token
     if subject != '' and relation != '' and object_ != '':
         triplets.append({'head': subject.strip(), 'type': relation.strip(),'tail': object_.strip()})
+    # print("################")
+    # print(f"text: {text}")
+    # print(f"triplets: {triplets}")
+    # print("###############")
+    # sleep(1)
     return triplets
 
 def extract_triplets_typed(text, mapping_types= {'<peop>': 'Peop', '<org>': 'Org', '<other>': 'Other', '<loc>': 'Loc'}):
