@@ -62,9 +62,6 @@ def train(conf: omegaconf.DictConfig) -> None:
         decoder_start_token_id = 0,
         early_stopping = False,
         no_repeat_ngram_size = 0,
-        # cache_dir=conf.cache_dir,
-        # revision=conf.model_revision,
-        # use_auth_token=True if conf.use_auth_token else None,
     )
     
     tokenizer_kwargs = {
@@ -76,12 +73,6 @@ def train(conf: omegaconf.DictConfig) -> None:
         conf.tokenizer_name if conf.tokenizer_name else conf.model_name_or_path,
         **tokenizer_kwargs
     )
-    if conf.dataset_name.split('/')[-1] == 'conll04_typed.py':
-        tokenizer.add_tokens(['<peop>', '<org>', '<other>', '<loc>'], special_tokens = True)
-    if conf.dataset_name.split('/')[-1] == 'nyt_typed.py':
-        tokenizer.add_tokens(['<loc>', '<org>', '<per>'], special_tokens = True)
-    if conf.dataset_name.split('/')[-1] == 'docred_typed.py':
-        tokenizer.add_tokens(['<loc>', '<misc>', '<per>', '<num>', '<time>', '<org>'], special_tokens = True)
 
     model = AutoModelForSeq2SeqLM.from_pretrained(
         conf.model_name_or_path,
@@ -100,7 +91,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     pl_module.hparams.test_file = pl_data_module.conf.test_file
     # trainer
     trainer = pl.Trainer(
-        gpus=conf.gpus,
+        num_nodes=conf.gpus,
     )
     # Manually run prep methods on DataModule
     pl_data_module.prepare_data()

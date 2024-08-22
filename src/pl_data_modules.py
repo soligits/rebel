@@ -188,10 +188,4 @@ class BasePLDataModule(LightningDataModule):
         # model_inputs["decoder_attention_mask"] = labels["attention_mask"]
         # model_inputs["labels"] = shift_tokens_left(labels["input_ids"], self.tokenizer.pad_token_id)
         model_inputs["labels"] = labels["input_ids"]
-        # print("############################")
-        # print("input:" + inputs[0])
-        # print("target:" + targets[0])
-        # print(f"input_ids: {model_inputs['input_ids'][0]}")
-        # print(f"target_ids: {model_inputs['labels'][0]}")
-        # time.sleep(10)
         return model_inputs

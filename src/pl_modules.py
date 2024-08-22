@@ -192,7 +192,6 @@ class BasePLModule(pl.LightningModule):
 
         decoded_preds = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=False)
         decoded_labels = self.tokenizer.batch_decode(torch.where(labels != -100, labels, self.config.pad_token_id), skip_special_tokens=False)
-        print(decoded_labels)
         return [extract_triplets(rel) for rel in decoded_preds], [extract_triplets(rel) for rel in decoded_labels]
 
     def generate_samples(self,
@@ -290,8 +289,6 @@ class BasePLModule(pl.LightningModule):
         
         forward_output['loss'] = forward_output['loss'].mean().detach()
 
-        # print(forward_output)
-        # time.sleep(10)
         
         if self.hparams.prediction_loss_only:
             self.log('val_loss', forward_output['loss'])
@@ -381,8 +378,6 @@ class BasePLModule(pl.LightningModule):
         if self.hparams.relations_file:
             relations_df = pd.read_csv(self.hparams.relations_file, header = None, sep='\t')
             relations = list(relations_df[0])
-            print(output)
-            time.sleep(10)
             scores, precision, recall, f1 = re_score([item for pred in output for item in pred['predictions']], [item for pred in output for item in pred['labels']], relations)
             self.log('val_prec_micro', precision)
             self.log('val_recall_micro', recall)
