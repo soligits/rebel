@@ -1,3 +1,4 @@
+from time import sleep
 from typing import Sequence
 
 import torch
@@ -47,6 +48,8 @@ class GenerateTextSamplesCallback(Callback):  # pragma: no cover
 
         decoder_inputs = torch.roll(labels, 1, 1)[:,0:2]
         decoder_inputs[:, 0] = 0
+        # print(decoder_inputs)
+        # sleep(10000)
         generated_tokens = pl_module.model.generate(
             batch["input_ids"].to(pl_module.model.device),
             attention_mask=batch["attention_mask"].to(pl_module.model.device),
