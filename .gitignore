@@ -4,3 +4,8 @@ outputs/
 data/prebel/
 *.tar.bz2
 screenlog.*
+model/
+src/lightning_logs
+tokenizer/
+*checkpoint.ipynb
+*-checkpoint.ipynb_checkpoints
