@@ -10,6 +10,5 @@ transformers
 tokenizers
 datasets
 huggingface-hub
-# torch==2.1.0+cu121
 pytorch-lightning
 sentencepiece
