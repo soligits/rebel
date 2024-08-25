@@ -9,3 +9,6 @@ src/lightning_logs
 tokenizer/
 *checkpoint.ipynb
 *-checkpoint.ipynb_checkpoints
+credentials.json
+*.jsonl
+*.tsv

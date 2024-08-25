@@ -1,14 +1,13 @@
 # @package _global_
 
 num_workers: 8
-dataset_name: '/home/ubuntu/rebel/datasets/rebel-short.py'
+dataset_name: '/home/ubuntu/rebel/datasets/persian_trex.py'
 text_column: 'context'
 target_column: 'triplets'
-dataset_path: '/home/ubuntu/rebel/data/prebel'
-train_file: '/home/ubuntu/rebel/data/prebel/train.jsonl'
-validation_file: '/home/ubuntu/rebel/data/prebel/val.jsonl'
-test_file: '/home/ubuntu/rebel/data/prebel/test.jsonl'
-overwrite_cache: True
+train_file: '/home/ubuntu/rebel/data/train.jsonl'
+validation_file: '/home/ubuntu/rebel/data/val.jsonl'
+test_file: '/home/ubuntu/rebel/data/test.jsonl'
+overwrite_cache: False
 preprocessing_num_workers: 
 max_source_length: 256
 max_target_length: 128
@@ -21,4 +20,4 @@ num_beams:
 eval_beams: 3
 ignore_pad_token_for_loss: True
 source_prefix: 
-relations_file: '/home/ubuntu/rebel/data/prebel/relations_count.tsv'
+relations_file: '/home/ubuntu/rebel/data/relations_count.tsv'

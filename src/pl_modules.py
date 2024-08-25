@@ -182,12 +182,12 @@ class BasePLModule(pl.LightningModule):
             "num_beams": self.hparams.eval_beams if self.hparams.eval_beams is not None else self.config.num_beams,
         }
 
-        batch_size = batch['input_ids'].shape[0]
-        decoder_inputs = torch.tensor([[0, 250100] for _ in range(batch_size)])
+        # batch_size = batch['input_ids'].shape[0]
+        # decoder_inputs = torch.tensor([[0, 250100] for _ in range(batch_size)])
         generated_tokens = self.model.generate(
             batch["input_ids"].to(self.model.device),
             attention_mask=batch["attention_mask"].to(self.model.device),
-            decoder_input_ids=decoder_inputs.to(self.model.device),
+            # decoder_input_ids=decoder_inputs.to(self.model.device),
             use_cache = True,
             **gen_kwargs,
         )

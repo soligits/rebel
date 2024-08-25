@@ -63,15 +63,10 @@ class BasePLDataModule(LightningDataModule):
         self.conf = conf
         self.tokenizer = tokenizer
         self.model = model
-        dataset_path = conf.dataset_path
-        # if conf.relations_file:
-        #     self.datasets = load_dataset(dataset_path, name=conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file, 'relations': conf.relations_file})
-        # else:
         self.datasets = load_dataset(conf.dataset_name, data_files={'train': conf.train_file, 'dev': conf.validation_file, 'test': conf.test_file}, trust_remote_code=True)
         disable_caching()
         self.prefix = conf.source_prefix if conf.source_prefix is not None else ""
         self.column_names = self.datasets["train"].column_names
-        # self.source_lang, self.target_lang, self.text_column, self.summary_column = None, None, None, None
         self.text_column = conf.text_column
         self.summary_column = conf.target_column
         self.max_target_length = conf.max_target_length
